@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { FileForm } from "@/components/file-input";
+import { FileForm } from '@/components/file-input';
 
 export default function Docs() {
   return (
@@ -8,10 +8,8 @@ export default function Docs() {
       <div>
         <FileForm
           label="PDF"
-          accept={["application/pdf"]}
-          onSubmit={(files) =>
-            console.log("Chat with the following pdfs", files)
-          }
+          accept={['application/pdf']}
+          onSubmit={(files) => console.log('Chat with the following pdfs', files)}
         />
       </div>
     </main>

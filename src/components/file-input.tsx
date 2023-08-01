@@ -1,12 +1,12 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 export const CONTENT_TYPE_TO_EXT_MAP = {
-  "text/csv": "csv",
-  "application/pdf": "pdf",
-  "text/plain": "text",
+  'text/csv': 'csv',
+  'application/pdf': 'pdf',
+  'text/plain': 'text',
 } as const;
 
 export type ContentType = keyof typeof CONTENT_TYPE_TO_EXT_MAP;
@@ -35,7 +35,7 @@ export function FileForm(props: PropsType) {
 
     if (Array.isArray(accept) && !accept.includes(type)) {
       const fileTypes = accept.map((t) => CONTENT_TYPE_TO_EXT_MAP[t]);
-      setError(`Supported file types: ${fileTypes.join(", ")}`);
+      setError(`Supported file types: ${fileTypes.join(', ')}`);
     } else {
       setError(null);
       setFiles([file]);
@@ -50,13 +50,9 @@ export function FileForm(props: PropsType) {
           id="file-input"
           type="file"
           onChange={onChange}
-          className={`cursor-pointer${error ? " border-red-700" : ""}`}
+          className={`cursor-pointer${error ? ' border-red-700' : ''}`}
         />
-        <Button
-          type="submit"
-          disabled={files.length === 0}
-          onClick={() => onSubmit(files)}
-        >
+        <Button type="submit" disabled={files.length === 0} onClick={() => onSubmit(files)}>
           Continue
         </Button>
       </div>
