@@ -16,7 +16,7 @@ const Uploader = () => {
     formData.append('file', files[0]);
     formData.append('filename', files[0].name);
 
-    const res = await window.fetch('/docs/api/upload/', {
+    const res = await window.fetch('/docs/api/upload', {
       method: 'POST',
       body: formData,
     });
