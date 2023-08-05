@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const doc = await converters.pdf(fileContentBuffer, { url: `file://${filename}` });
 
   try {
-    const splitter = new TextSplitter({ chunkSize: 1000, chunkOverlap: 0 });
+    const splitter = new TextSplitter({ chunkSize: 1750, chunkOverlap: 150 });
     const embedder = new OpenAIEmbedder();
 
     const chunks = await splitter.split(doc);
