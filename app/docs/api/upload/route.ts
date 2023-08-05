@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { converters, Pinecone, TextSplitter, OpenAIEmbedder } from 'axgen';
-import { getEnvOrThrow } from '@/lib/utils';
+import { getEnvOrThrow } from '@/lib/node-utils';
 
 function zip<T1, T2>(l1: Array<T1>, l2: Array<T2>): Array<[T1, T2]> {
   if (l1.length !== l2.length) {
