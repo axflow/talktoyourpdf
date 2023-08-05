@@ -11,23 +11,40 @@ const JSON_SEPARATOR_CODE_POINT = String.fromCharCode(parseInt('1d', 16));
 const CONTENT_SEPARATOR_CODE_POINT = String.fromCharCode(parseInt('1e', 16));
 
 const Uploader = () => {
+  const [disabled, setDisabled] = useState(false);
+
   const handleSubmit = async (files: File[]) => {
+    setDisabled(true);
+
     const formData = new FormData();
     formData.append('file', files[0]);
     formData.append('filename', files[0].name);
 
-    const res = await fetch('/docs/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-    const responseData = await res.json();
-    console.log('responseData', responseData);
+    try {
+      const res = await fetch('/docs/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const responseData = await res.json();
+      console.log(responseData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDisabled(false);
+    }
   };
+
   return (
     <>
       <h1 className="text-4xl font-extrabold">Upload your pdf</h1>
       <div>
-        <FileForm label="PDF" accept={['application/pdf']} onSubmit={handleSubmit} />
+        <FileForm
+          label="PDF"
+          accept={['application/pdf']}
+          onSubmit={handleSubmit}
+          disabled={disabled}
+        />
       </div>
     </>
   );

@@ -14,11 +14,12 @@ export type ContentType = keyof typeof CONTENT_TYPE_TO_EXT_MAP;
 type PropsType = {
   label: string;
   accept?: ContentType[];
+  disabled?: boolean;
   onSubmit: (files: File[]) => void;
 };
 
 export function FileForm(props: PropsType) {
-  const { label, accept, onSubmit } = props;
+  const { label, accept, disabled, onSubmit } = props;
 
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export function FileForm(props: PropsType) {
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
 
-    if (!files) {
+    if (!files || files.length < 1) {
       return;
     }
 
@@ -52,7 +53,11 @@ export function FileForm(props: PropsType) {
           onChange={onChange}
           className={`cursor-pointer${error ? ' border-red-700' : ''}`}
         />
-        <Button type="submit" disabled={files.length === 0} onClick={() => onSubmit(files)}>
+        <Button
+          type="submit"
+          disabled={disabled || files.length === 0}
+          onClick={() => onSubmit(files)}
+        >
           Continue
         </Button>
       </div>
