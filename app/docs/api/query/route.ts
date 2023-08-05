@@ -7,6 +7,8 @@ import {
   Retriever,
   OpenAIEmbedder,
   QUESTION_WITH_CONTEXT,
+  OpenAIChatCompletionStreaming,
+  IVectorQueryResult,
 } from 'axgen';
 
 // Separators recommended from
@@ -28,31 +30,26 @@ const queryChatStream = async ({ query }: { query: string }) => {
     retriever: new Retriever({ store, topK: 4 }),
     embedder: new OpenAIEmbedder(),
   });
+
   return rag.stream(query);
 };
 
-type ChatResponse = {
-  choices: Array<{
-    delta: {
-      content: string;
-    };
-  }>;
-};
-
-type InfoContext = {
-  context?: Array<object>;
-};
-
-function iterableToStream(iterable: AsyncIterable<ChatResponse>, info: InfoContext) {
+function iterableToStream(
+  iterable: AsyncIterable<OpenAIChatCompletionStreaming.Response>,
+  info: { context?: IVectorQueryResult[] },
+) {
   const encoder = new TextEncoder();
   return new ReadableStream({
     async pull(controller) {
       for await (const value of iterable) {
-        const chunk = typeof value === 'string' ? value : value.choices[0].delta.content;
-        controller.enqueue(encoder.encode(chunk));
+        const chunk = value.choices[0].delta.content;
+        if (typeof chunk === 'string') {
+          controller.enqueue(encoder.encode(chunk));
+        }
       }
 
       controller.enqueue(CONTENT_STREAM_SEPARATOR);
+
       const documents = info.context;
       if (documents) {
         for (const document of documents) {
@@ -69,7 +66,6 @@ function iterableToStream(iterable: AsyncIterable<ChatResponse>, info: InfoConte
 export async function POST(request: NextRequest) {
   const { query } = await request.json();
   const { result: iterable, info } = await queryChatStream({ query });
-  // @ts-ignore (I dont understand this error TODO fix)
   const stream = iterableToStream(iterable, info);
   return new Response(stream);
 }
