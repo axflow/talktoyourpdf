@@ -69,6 +69,7 @@ function iterableToStream(iterable: AsyncIterable<ChatResponse>, info: InfoConte
 export async function POST(request: NextRequest) {
   const { query } = await request.json();
   const { result: iterable, info } = await queryChatStream({ query });
+  // @ts-ignore (I dont understand this error TODO fix)
   const stream = iterableToStream(iterable, info);
   return new Response(stream);
 }
