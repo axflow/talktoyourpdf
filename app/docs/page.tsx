@@ -41,7 +41,7 @@ const Uploader = () => {
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Something went wrong uploading ${filename}. Please try again.',
+        description: `Something went wrong uploading ${filename}. Please try again.`,
         variant: 'destructive',
       });
       console.error(error);
