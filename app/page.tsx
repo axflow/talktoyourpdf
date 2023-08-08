@@ -152,7 +152,7 @@ const Response = ({ response }: { response: string }) => {
     </>
   );
 };
-export default function Docs() {
+export default function LandingPage() {
   const [response, setResponse] = useState('');
 
   return (
