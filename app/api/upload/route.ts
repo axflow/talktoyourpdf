@@ -33,19 +33,23 @@ export async function POST(request: NextRequest) {
   const fileContentBuffer = Buffer.from(arrayBuffer);
   const doc = await converters.pdf(fileContentBuffer, { url: `file://${filename}` });
 
+  // await delay(null, 1200);
+
+  // return NextResponse.json({ doc }, { status: 200 });
+
   try {
-    const splitter = new TextSplitter({ chunkSize: 1750, chunkOverlap: 150 });
-    const embedder = new OpenAIEmbedder();
+    const splitter = new TextSplitter({ chunkSize: 1600, chunkOverlap: 0 });
+    // const embedder = new OpenAIEmbedder();
 
     const chunks = await splitter.split(doc);
-    const embeddings = await embedder.embed(chunks.map((chunk) => chunk.text));
+    // const embeddings = await embedder.embed(chunks.map((chunk) => chunk.text));
 
-    const chunksWithEmbeddings = zip(chunks, embeddings).map(([chunk, embeddings]) => ({
-      ...chunk,
-      embeddings,
-    }));
+    // const chunksWithEmbeddings = zip(chunks, embeddings).map(([chunk, embeddings]) => ({
+    //   ...chunk,
+    //   embeddings,
+    // }));
 
-    await store.add(chunksWithEmbeddings);
+    // await store.add(chunksWithEmbeddings);
 
     const count = chunks.length;
 

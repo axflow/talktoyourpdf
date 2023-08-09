@@ -1,27 +1,17 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { UploadIcon } from '@radix-ui/react-icons';
+import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
 
-export const CONTENT_TYPE_TO_EXT_MAP = {
-  'text/csv': 'csv',
-  'application/pdf': 'pdf',
-  'text/plain': 'text',
-} as const;
-
-export type ContentType = keyof typeof CONTENT_TYPE_TO_EXT_MAP;
+const FIVE_MEGABYTES = 5 * 1024 * 1024;
 
 type PropsType = {
-  label: string;
-  accept?: ContentType[];
-  disabled?: boolean;
-  onSubmit: (files: File[]) => void;
+  uploading: null | { progress: number; message: string };
+  onSubmit: (file: File) => void;
 };
 
-export function FileForm(props: PropsType) {
-  const { label, accept, disabled, onSubmit } = props;
+export function PDFUploadForm(props: PropsType) {
+  const { uploading, onSubmit } = props;
 
-  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -32,36 +22,52 @@ export function FileForm(props: PropsType) {
     }
 
     const file = files[0];
-    const type = file.type as ContentType;
 
-    if (Array.isArray(accept) && !accept.includes(type)) {
-      const fileTypes = accept.map((t) => CONTENT_TYPE_TO_EXT_MAP[t]);
-      setError(`Supported file types: ${fileTypes.join(', ')}`);
+    if (file.type !== 'application/pdf') {
+      setError('Only PDF files are allowed. Please select a PDF file.');
+    } else if (file.size > FIVE_MEGABYTES) {
+      setError('Maximum supported file size is 5 megabytes. Please choose a smaller PDF file.');
     } else {
       setError(null);
-      setFiles([file]);
+      onSubmit(file);
     }
   }
 
   return (
-    <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="file-input">{label}</Label>
-      <div className="flex w-full max-w-sm items-center space-x-2">
-        <Input
-          id="file-input"
-          type="file"
-          onChange={onChange}
-          className={`cursor-pointer${error ? ' border-red-700' : ''}`}
-        />
-        <Button
-          type="submit"
-          disabled={disabled || files.length === 0}
-          onClick={() => onSubmit(files)}
-        >
-          Continue
-        </Button>
+    <div className="w-full">
+      {uploading === null ? <UploadForm onChange={onChange} /> : <Uploading {...uploading} />}
+      {error && <p className="pt-4 text-red-600 text-sm text-center">{error}</p>}
+    </div>
+  );
+}
+
+function UploadForm({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <label
+      htmlFor="dropzone-file"
+      className="flex flex-col items-center justify-center w-full h-64 border-2 border-zinc-600 hover:border-zinc-400 border-dashed rounded-lg cursor-pointer text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300 transition ease-in"
+    >
+      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <p className="mb-2">
+          <UploadIcon width={32} height={32} />
+        </p>
+        <p className="mb-2 text-sm">
+          <span className="font-semibold">Click to upload</span> or drag and drop
+        </p>
+        <p className="text-xs">PDF (maximum size of 5MB)</p>
       </div>
-      {error && <span className="text-red-700 text-sm">{error}</span>}
+      <input id="dropzone-file" type="file" className="hidden" onChange={onChange} />
+    </label>
+  );
+}
+
+function Uploading({ message, progress }: { message: string; progress: number }) {
+  return (
+    <div className="flex flex-col items-center justify-center w-full h-64 border-2 border-zinc-400 border-dashed rounded-lg cursor-pointer hover:text-zinc-300 transition ease-in">
+      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <Progress value={progress * 100} className="w-[300px] mb-2" />
+        <p className="text-sm">{message}</p>
+      </div>
     </div>
   );
 }

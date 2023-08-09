@@ -4,7 +4,7 @@ import { GitHubLogoIcon, TwitterLogoIcon } from '@radix-ui/react-icons';
 
 export default function Header() {
   return (
-    <div className="flex items-center justify-between border-b bg-background px-6 py-2">
+    <div className="flex items-center justify-between border-b boder-zinc-600 px-6 py-2">
       <Link href="https://axilla.io" target="_blank">
         <Image src="/axilla-logo-text-white.png" height={30} width={90} alt="Axilla logo" />
       </Link>
