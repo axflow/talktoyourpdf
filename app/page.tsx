@@ -55,9 +55,11 @@ const Uploader = () => {
 export default function LandingPage() {
   return (
     <main className="h-screen flex">
-      <section className="bg-muted bg-zinc-900 dark:border-r flex-[45_45_0%] pt-[52px]">
-        <div className="pl-6 pr-8 pt-24">
-          <h1 className="text-3xl lg:text-5xl font-bold leading-tight tracking-tighter">Welcome</h1>
+      <section className="bg-muted bg-zinc-900 dark:border-r lg:max-w-[600px] pt-[52px]">
+        <div className="pl-6 pr-9 pt-24">
+          <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+            Welcome
+          </h1>
 
           <p className="mt-6">
             This is a guided tutorial of Retrieval Augmented Generation (RAG) using the{' '}
@@ -70,14 +72,19 @@ export default function LandingPage() {
             .
           </p>
 
-          <p className="mt-6 border-l-[6px] pl-4 border-zinc-800 text-muted-foreground text-sm">
-            Retrieval Augmented Generation is a method that combines the strengths of large language
-            models and external retrieval or search mechanisms. In RAG, when generating a response,
-            the model first retrieves relevant information or documents from a large corpus and then
-            uses this retrieved information to conditionally generate an answer. This allows the
-            model to pull in external knowledge beyond its training data when answering questions.
-            <span className="block pt-4 font-semibold">ChatGPT</span>
-          </p>
+          <blockquote className="mt-6 border-l-2 pl-6 text-sm text-muted-foreground">
+            <p className="italic">
+              Retrieval Augmented Generation is a method that combines the strengths of large
+              language models and external retrieval or search mechanisms. In RAG, when generating a
+              response, the model first retrieves relevant information or documents from a large
+              corpus and then uses this retrieved information to conditionally generate an answer.
+              <span className="font-bold">
+                This allows the model to pull in external knowledge beyond its training data when
+                answering questions.
+              </span>
+            </p>
+            <footer className="mt-3 font-semibold">— ChatGPT</footer>
+          </blockquote>
 
           <p className="mt-6">
             For this tutorial, we're going to ask ChatGPT questions about our own documents using
@@ -85,7 +92,7 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
-      <section className="flex-[55_55_0%] pt-[52px]">
+      <section className="w-full pt-[52px]">
         <div className="px-6 pt-24">
           <Uploader />
         </div>

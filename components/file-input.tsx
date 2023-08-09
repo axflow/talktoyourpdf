@@ -45,7 +45,7 @@ function UploadForm({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputEle
   return (
     <label
       htmlFor="dropzone-file"
-      className="flex flex-col items-center justify-center w-full h-64 border-2 border-zinc-600 hover:border-zinc-400 border-dashed rounded-lg cursor-pointer text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300 transition ease-in"
+      className="flex flex-col items-center justify-center w-full h-96 border-2 border-zinc-600 hover:border-zinc-400 border-dashed rounded-lg cursor-pointer text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300 transition ease-in"
     >
       <div className="flex flex-col items-center justify-center pt-5 pb-6">
         <p className="mb-2">
@@ -63,7 +63,7 @@ function UploadForm({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputEle
 
 function Uploading({ message, progress }: { message: string; progress: number }) {
   return (
-    <div className="flex flex-col items-center justify-center w-full h-64 border-2 border-zinc-400 border-dashed rounded-lg cursor-pointer hover:text-zinc-300 transition ease-in">
+    <div className="flex flex-col items-center justify-center w-full h-96 border-2 border-zinc-400 border-dashed rounded-lg cursor-pointer hover:text-zinc-300 transition ease-in">
       <div className="flex flex-col items-center justify-center pt-5 pb-6">
         <Progress value={progress * 100} className="w-[300px] mb-2" />
         <p className="text-sm">{message}</p>
