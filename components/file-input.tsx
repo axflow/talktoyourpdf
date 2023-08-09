@@ -1,6 +1,9 @@
+import { useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+
 import { UploadIcon } from '@radix-ui/react-icons';
 import { Progress } from '@/components/ui/progress';
-import { useState } from 'react';
+import { cn } from '@/lib/client-utils';
 
 const FIVE_MEGABYTES = 5 * 1024 * 1024;
 
@@ -14,38 +17,56 @@ export function PDFUploadForm(props: PropsType) {
 
   const [error, setError] = useState<string | null>(null);
 
-  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-
-    if (!files || files.length < 1) {
-      return;
-    }
-
-    const file = files[0];
-
-    if (file.type !== 'application/pdf') {
-      setError('Only PDF files are allowed. Please select a PDF file.');
-    } else if (file.size > FIVE_MEGABYTES) {
-      setError('Maximum supported file size is 5 megabytes. Please choose a smaller PDF file.');
-    } else {
-      setError(null);
-      onSubmit(file);
-    }
-  }
-
   return (
     <div className="w-full">
-      {uploading === null ? <UploadForm onChange={onChange} /> : <Uploading {...uploading} />}
+      {uploading === null ? (
+        <UploadForm setError={setError} onSubmit={onSubmit} />
+      ) : (
+        <Uploading {...uploading} />
+      )}
       {error && <p className="pt-4 text-red-600 text-sm text-center">{error}</p>}
     </div>
   );
 }
 
-function UploadForm({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+type UploadPropsType = {
+  onSubmit: (file: File) => void;
+  setError: (message: string | null) => void;
+};
+
+function UploadForm({ setError, onSubmit }: UploadPropsType) {
+  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+    onDrop: (files, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        setError('Only one PDF file is allowed. Please select a PDF file.');
+        return;
+      }
+
+      const file = files[0];
+
+      if (file) {
+        if (file.size >= FIVE_MEGABYTES) {
+          setError('Maximum supported file size is 5 megabytes. Please choose a smaller PDF file.');
+        } else {
+          setError(null);
+          onSubmit(file);
+        }
+      }
+    },
+    maxFiles: 1,
+    accept: { 'application/pdf': ['.pdf'] },
+  });
+
   return (
     <label
-      htmlFor="dropzone-file"
-      className="flex flex-col items-center justify-center w-full h-96 border-2 border-zinc-600 hover:border-zinc-400 border-dashed rounded-lg cursor-pointer text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300 transition ease-in"
+      {...getRootProps({
+        onClick: open,
+        htmlFor: 'dropzone-file',
+        className: cn(
+          'flex flex-col items-center justify-center w-full h-96 border-2 border-zinc-600 hover:border-zinc-400 border-dashed rounded-lg cursor-pointer text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300 transition ease-in',
+          isDragActive && 'dark:text-zinc-300 border-zinc-400',
+        ),
+      })}
     >
       <div className="flex flex-col items-center justify-center pt-5 pb-6">
         <p className="mb-2">
@@ -56,7 +77,7 @@ function UploadForm({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputEle
         </p>
         <p className="text-xs">PDF (maximum size of 5MB)</p>
       </div>
-      <input id="dropzone-file" type="file" className="hidden" onChange={onChange} />
+      <input {...getInputProps({ id: 'dropzone-file', className: 'hidden' })} />
     </label>
   );
 }
