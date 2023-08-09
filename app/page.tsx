@@ -11,15 +11,15 @@ const Uploader = () => {
   const { toast } = useToast();
 
   const handleSubmit = async (file: File) => {
-    const message = `Uploading ${file.name}...`;
+    const message = `Processing ${file.name}...`;
 
-    setUploading({ progress: 0, message: message });
+    setUploading({ progress: 0, message });
 
     try {
       const { body } = await uploadFile('/api/upload', file, (progress) => {
         setUploading({
-          progress,
-          message: progress === 1 ? `Processing ${file.name}...` : message,
+          message,
+          progress: Math.min(progress, 0.9),
         });
       });
 
