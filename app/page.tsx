@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { PDFUploadForm } from '@/components/file-input';
 import { uploadFile } from '@/lib/client-utils';
+import Link, { SpanLink } from '@/components/link';
 
 const Uploader = () => {
   const [uploading, setUploading] = useState<null | { progress: number; message: string }>(null);
@@ -54,7 +55,7 @@ const Uploader = () => {
 
 export default function LandingPage() {
   return (
-    <main className="h-screen flex">
+    <main className="min-h-screen flex">
       <section className="bg-muted bg-zinc-900 dark:border-r lg:max-w-[600px] pt-[52px]">
         <div className="pl-6 pr-9 pt-24">
           <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -63,13 +64,7 @@ export default function LandingPage() {
 
           <p className="mt-6">
             This is a guided tutorial of Retrieval Augmented Generation (RAG) using the{' '}
-            <a
-              href="https://github.com/axilla-io/ax"
-              className="font-medium underline underline-offset-4"
-            >
-              ax framework
-            </a>
-            .
+            <Link href="https://github.com/axilla-io/ax">ax framework</Link>.
           </p>
 
           <blockquote className="mt-6 border-l-2 pl-6 text-sm text-muted-foreground">
@@ -92,11 +87,7 @@ export default function LandingPage() {
           </p>
 
           <p className="mt-6">
-            To begin, upload a PDF file less than 5MB or{' '}
-            <span className="font-medium underline underline-offset-4 cursor-pointer">
-              try this one
-            </span>
-            .
+            To begin, upload a PDF file less than 5MB or <SpanLink>try this one</SpanLink>.
           </p>
         </div>
       </section>
