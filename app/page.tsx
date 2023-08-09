@@ -87,8 +87,16 @@ export default function LandingPage() {
           </blockquote>
 
           <p className="mt-6">
-            For this tutorial, we're going to ask ChatGPT questions about our own documents using
-            RAG. Upload a PDF file less than 5MB to begin.
+            For this tutorial, we're trying to develop an understanding of how ChatGPT can better
+            answer our questions when provided relevant context from our documents.
+          </p>
+
+          <p className="mt-6">
+            To begin, upload a PDF file less than 5MB or{' '}
+            <span className="font-medium underline underline-offset-4 cursor-pointer">
+              try this one
+            </span>
+            .
           </p>
         </div>
       </section>
