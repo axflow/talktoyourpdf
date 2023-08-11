@@ -4,17 +4,32 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { UploadIcon } from '@radix-ui/react-icons';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PDFUploadForm } from '@/components/file-input';
 import Link, { SpanLink } from '@/components/link';
 import { Button } from '@/components/ui/button';
 
 import { SHOPIFY_S1_PDF_URL, SHOPIFY_S1_PDF_FILENAME, type PDFType } from '@/lib/pdf';
-import { createPdfObject, downloadPDFDocument, uploadFile, cn } from '@/lib/client-utils';
+import { createPdfObjectFromRemoteURL, uploadFile } from '@/lib/client-utils';
 
-function PDFUploadView(props: { pdf: PDFType }) {
+function PDFUploadView(props: {
+  pdf: PDFType;
+  onSuccess: (response: any) => void;
+  onTryAgain: (file?: PDFType) => void;
+}) {
   const [uploading, setUploading] = useState(false);
+  const [failed, setFailed] = useState(false);
 
-  const pdf = props.pdf;
+  const { pdf, onSuccess, onTryAgain } = props;
 
   async function onUpload() {
     if (uploading) {
@@ -25,9 +40,10 @@ function PDFUploadView(props: { pdf: PDFType }) {
 
     try {
       const response = await uploadFile('/api/upload', pdf.file);
-      console.log(response);
+      onSuccess(response);
     } catch (error) {
       console.error(error);
+      setFailed(true);
     } finally {
       setUploading(false);
     }
@@ -57,6 +73,40 @@ function PDFUploadView(props: { pdf: PDFType }) {
           </p>
         )}
       </div>
+      <AlertDialog open={failed}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ruh roh!</AlertDialogTitle>
+            <AlertDialogDescription>
+              The request failed to parse the PDF. PDF parsing is surprisingly brittle in Node.
+              We're working to fix that! In the meantime, you can try a different file or use our
+              example one.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                onTryAgain();
+                setFailed(false);
+              }}
+            >
+              Start over
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const file = await createPdfObjectFromRemoteURL(
+                  SHOPIFY_S1_PDF_URL,
+                  SHOPIFY_S1_PDF_FILENAME,
+                );
+                onTryAgain(file);
+                setFailed(false);
+              }}
+            >
+              Use example
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -94,8 +144,11 @@ function Welcome(props: { setPdf: (pdf: PDFType) => void }) {
         To begin, upload a PDF file less than 5MB or{' '}
         <SpanLink
           onClick={async () => {
-            const file = await downloadPDFDocument(SHOPIFY_S1_PDF_URL, SHOPIFY_S1_PDF_FILENAME);
-            props.setPdf(createPdfObject(file));
+            const file = await createPdfObjectFromRemoteURL(
+              SHOPIFY_S1_PDF_URL,
+              SHOPIFY_S1_PDF_FILENAME,
+            );
+            props.setPdf(file);
           }}
         >
           try this one
@@ -152,6 +205,14 @@ function Chunking() {
 export default function LandingPage() {
   const [pdf, setPdf] = useState<PDFType | null>(null);
 
+  function onTryAgain(file?: PDFType) {
+    if (pdf) {
+      URL.revokeObjectURL(pdf.url);
+    }
+
+    setPdf(file || null);
+  }
+
   return (
     <main className="min-h-screen flex">
       <section className="bg-muted bg-zinc-900 dark:border-r lg:max-w-[600px] pt-[52px]">
@@ -163,7 +224,11 @@ export default function LandingPage() {
         <div className="px-6 pt-24">
           <div className="flex items-center justify-center w-full">
             <div className="py-2 w-[500px]">
-              {pdf !== null ? <PDFUploadView pdf={pdf} /> : <PDFUploadForm onSubmit={setPdf} />}
+              {pdf !== null ? (
+                <PDFUploadView pdf={pdf} onSuccess={() => undefined} onTryAgain={onTryAgain} />
+              ) : (
+                <PDFUploadForm onSubmit={setPdf} />
+              )}
             </div>
           </div>
         </div>

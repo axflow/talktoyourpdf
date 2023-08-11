@@ -17,6 +17,10 @@ export async function uploadFile(url: string, file: File) {
     body: formData,
   });
 
+  if (!response.ok) {
+    throw new Error(`Failed to upload PDF`);
+  }
+
   return response.json();
 }
 
@@ -32,4 +36,9 @@ export function createPdfObject(file: File): PDFType {
     url: URL.createObjectURL(file),
     file: file,
   };
+}
+
+export async function createPdfObjectFromRemoteURL(url: string, filename: string) {
+  const file = await downloadPDFDocument(url, filename);
+  return createPdfObject(file);
 }
