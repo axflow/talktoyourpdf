@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { UploadIcon } from '@radix-ui/react-icons';
-import { cn } from '@/lib/client-utils';
+import { cn, createPdfObject } from '@/lib/client-utils';
 import { PDFType } from '@/lib/pdf';
 
-const FIVE_MEGABYTES = 5 * 1024 * 1024;
+const TWO_MEGABYTES = 2 * 1024 * 1024;
 
 type PropsType = {
   onSubmit: (pdf: PDFType) => void;
@@ -41,15 +41,11 @@ function UploadForm({ setError, onSubmit }: UploadPropsType) {
       const file = files[0];
 
       if (file) {
-        if (file.size >= FIVE_MEGABYTES) {
-          setError('Maximum supported file size is 5 megabytes. Please choose a smaller PDF file.');
+        if (file.size >= TWO_MEGABYTES) {
+          setError('Maximum supported file size is 2 megabytes. Please choose a smaller PDF file.');
         } else {
           setError(null);
-          onSubmit({
-            id: crypto.randomUUID(),
-            url: URL.createObjectURL(file),
-            filename: file.name || 'file.pdf',
-          });
+          onSubmit(createPdfObject(file));
         }
       }
     },
@@ -75,7 +71,7 @@ function UploadForm({ setError, onSubmit }: UploadPropsType) {
         <p className="mb-2 text-sm">
           <span className="font-semibold">Click to upload</span> or drag and drop
         </p>
-        <p className="text-xs">PDF (maximum size of 5MB)</p>
+        <p className="text-xs">PDF (maximum size of 2MB)</p>
       </div>
       <input {...getInputProps({ id: 'dropzone-file', className: 'hidden' })} />
     </label>

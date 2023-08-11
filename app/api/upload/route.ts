@@ -33,12 +33,8 @@ export async function POST(request: NextRequest) {
   const fileContentBuffer = Buffer.from(arrayBuffer);
   const doc = await converters.pdf(fileContentBuffer, { url: `file://${filename}` });
 
-  // await delay(null, 1200);
-
-  // return NextResponse.json({ doc }, { status: 200 });
-
   try {
-    const splitter = new TextSplitter({ chunkSize: 1600, chunkOverlap: 0 });
+    const splitter = new TextSplitter({ chunkSize: 2000, chunkOverlap: 0 });
     // const embedder = new OpenAIEmbedder();
 
     const chunks = await splitter.split(doc);
@@ -51,9 +47,7 @@ export async function POST(request: NextRequest) {
 
     // await store.add(chunksWithEmbeddings);
 
-    const count = chunks.length;
-
-    return NextResponse.json({ chunkCount: count, doc }, { status: 200 });
+    return NextResponse.json({ chunkCount: chunks.length }, { status: 200 });
   } catch {
     return NextResponse.json({ error: 'Error ingesting file' }, { status: 400 });
   }
