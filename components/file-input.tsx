@@ -1,36 +1,32 @@
+'use client';
+
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { UploadIcon } from '@radix-ui/react-icons';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/client-utils';
+import { PDFType } from '@/lib/pdf';
 
 const FIVE_MEGABYTES = 5 * 1024 * 1024;
 
 type PropsType = {
-  uploading: null | { progress: number; message: string };
-  onSubmit: (file: File) => void;
+  onSubmit: (pdf: PDFType) => void;
 };
 
 export function PDFUploadForm(props: PropsType) {
-  const { uploading, onSubmit } = props;
+  const { onSubmit } = props;
 
   const [error, setError] = useState<string | null>(null);
 
   return (
     <div className="w-full">
-      {uploading === null ? (
-        <UploadForm setError={setError} onSubmit={onSubmit} />
-      ) : (
-        <Uploading {...uploading} />
-      )}
+      <UploadForm setError={setError} onSubmit={onSubmit} />
       {error && <p className="pt-4 text-red-600 text-sm text-center">{error}</p>}
     </div>
   );
 }
 
-type UploadPropsType = {
-  onSubmit: (file: File) => void;
+type UploadPropsType = PropsType & {
   setError: (message: string | null) => void;
 };
 
@@ -49,7 +45,11 @@ function UploadForm({ setError, onSubmit }: UploadPropsType) {
           setError('Maximum supported file size is 5 megabytes. Please choose a smaller PDF file.');
         } else {
           setError(null);
-          onSubmit(file);
+          onSubmit({
+            id: crypto.randomUUID(),
+            url: URL.createObjectURL(file),
+            filename: file.name || 'file.pdf',
+          });
         }
       }
     },
@@ -79,16 +79,5 @@ function UploadForm({ setError, onSubmit }: UploadPropsType) {
       </div>
       <input {...getInputProps({ id: 'dropzone-file', className: 'hidden' })} />
     </label>
-  );
-}
-
-function Uploading({ message, progress }: { message: string; progress: number }) {
-  return (
-    <div className="flex flex-col items-center justify-center w-full h-96 border-2 border-zinc-400 border-dashed rounded-lg cursor-pointer hover:text-zinc-300 transition ease-in">
-      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-        <Progress value={progress * 100} className="w-[300px] mb-2" />
-        <p className="text-sm">{message}</p>
-      </div>
-    </div>
   );
 }
