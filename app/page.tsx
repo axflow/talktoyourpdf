@@ -18,11 +18,15 @@ import { PDFUploadForm } from '@/components/file-input';
 import Link, { SpanLink } from '@/components/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 
 import { SHOPIFY_S1_PDF_URL, SHOPIFY_S1_PDF_FILENAME, type PDFType } from '@/lib/pdf';
-import { createPdfObjectFromRemoteURL, uploadFile } from '@/lib/client-utils';
+import {
+  createPdfObjectFromRemoteURL,
+  queryStream,
+  generateSequentialId,
+  uploadFile,
+} from '@/lib/client-utils';
 
 function PDFUploadView(props: {
   pdf: PDFType;
@@ -238,40 +242,43 @@ function Querying(props: { pdf: PDFType }) {
 }
 
 type MessageType = {
-  id: string;
+  id: number;
   text: string;
   user: boolean;
 };
 
 function Playground(props: {
   disabled: boolean;
-  onSubmit: (question: string) => void;
   messages: MessageType[];
+  response: MessageType | null;
+  onSubmit: () => void;
+  questionText: string;
+  setQuestionText: (text: string) => void;
 }) {
-  const [question, setQuestion] = useState('');
-
   function onChange(e: React.FormEvent<HTMLTextAreaElement>) {
-    setQuestion(e.currentTarget.value);
+    props.setQuestionText(e.currentTarget.value);
   }
+
+  const messages = props.response ? props.messages.concat([props.response]) : props.messages;
 
   return (
     <div className="h-full flex flex-col justify-end">
       <div className="">
-        {props.messages.map((msg) => {
+        {messages.map((msg) => {
           return <p key={msg.id}>{msg.text}</p>;
         })}
       </div>
       <Separator className="my-4" />
       <div className="pb-8 px-6">
         <Textarea
-          value={question}
+          value={props.questionText}
           onChange={onChange}
           id="user-prompt"
           autoFocus
           placeholder="Ask a question..."
         />
         <div className="mt-4 flex justify-end">
-          <Button disabled={props.disabled} onClick={() => props.onSubmit(question)}>
+          <Button disabled={props.disabled} onClick={props.onSubmit}>
             Submit
           </Button>
         </div>
@@ -286,6 +293,10 @@ export default function LandingPage() {
   const [step, setStep] = useState<StepType>('landing');
   const [pdf, setPdf] = useState<PDFType | null>(null);
   const [playgroundDisabled, setPlaygroundDisabled] = useState(false);
+
+  const [questionText, setQuestionText] = useState('');
+  const [response, setResponse] = useState<MessageType | null>(null);
+
   const [messages, setMessages] = useState<MessageType[]>([]);
 
   function setPdfAndNavigate(file: PDFType) {
@@ -305,23 +316,37 @@ export default function LandingPage() {
     setStep('querying');
   }
 
-  async function onQuestionSubmit(question: string) {
+  async function onQuestionSubmit() {
     if (playgroundDisabled) {
       return;
     }
-
-    setMessages(messages.concat({ id: Date.now().toString(), text: question, user: true }));
-
     setPlaygroundDisabled(true);
 
-    function delay<T>(ms: number, value: T): Promise<T> {
-      return new Promise((resolve) => {
-        setTimeout(() => resolve(value), ms);
-      });
+    const updatedMessages = messages.concat([
+      {
+        id: generateSequentialId(),
+        text: questionText,
+        user: true,
+      },
+    ]);
+    setMessages(updatedMessages);
+    setQuestionText('');
+
+    let llmResponse: MessageType = {
+      id: generateSequentialId(),
+      text: '',
+      user: false,
+    };
+
+    for await (const object of queryStream(questionText)) {
+      if (object.type === 'chunk') {
+        llmResponse = { ...llmResponse, text: llmResponse.text + object.value };
+        setResponse(llmResponse);
+      }
     }
 
-    await delay(2000, null);
-
+    setResponse(null);
+    setMessages(updatedMessages.concat([llmResponse]));
     setPlaygroundDisabled(false);
   }
 
@@ -372,9 +397,12 @@ export default function LandingPage() {
         return (
           <div className="pt-24 h-full">
             <Playground
+              response={response}
               disabled={playgroundDisabled}
               onSubmit={onQuestionSubmit}
               messages={messages}
+              questionText={questionText}
+              setQuestionText={setQuestionText}
             />
           </div>
         );

@@ -30,9 +30,17 @@ export async function downloadPDFDocument(url: string, name = 'file.pdf') {
   return new File([blob], name, { type: 'application/pdf' });
 }
 
+export const generateSequentialId = ((counter: number) => {
+  return () => Date.now() + ++counter;
+})(0);
+
+export function generateId() {
+  return crypto.randomUUID();
+}
+
 export function createPdfObject(file: File): PDFType {
   return {
-    id: crypto.randomUUID(),
+    id: generateId(),
     url: URL.createObjectURL(file),
     file: file,
   };
@@ -41,4 +49,48 @@ export function createPdfObject(file: File): PDFType {
 export async function createPdfObjectFromRemoteURL(url: string, filename: string) {
   const file = await downloadPDFDocument(url, filename);
   return createPdfObject(file);
+}
+
+const NEWLINE_BYTE = 10;
+
+export async function* queryStream(queryText: string) {
+  const response = await fetch('/api/query', {
+    method: 'POST',
+    body: JSON.stringify({ query: queryText }),
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Response failed with status code ${response.status}`);
+  }
+
+  let buffer: number[] = [];
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+
+  function bufferToObject(buffer: number[]) {
+    const json = decoder.decode(Uint8Array.from(buffer));
+    return JSON.parse(json);
+  }
+
+  while (true) {
+    const { done, value } = await reader.read();
+
+    if (done) {
+      if (buffer.length > 0) {
+        console.warn('Unhandled bytes remaining after stream close');
+      }
+
+      break;
+    }
+
+    for (const byte of value) {
+      if (byte === NEWLINE_BYTE) {
+        yield bufferToObject(buffer);
+        buffer = [];
+        continue;
+      }
+
+      buffer.push(byte);
+    }
+  }
 }

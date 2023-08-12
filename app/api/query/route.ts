@@ -11,11 +11,6 @@ import {
   IVectorQueryResult,
 } from 'axgen';
 
-// Separators recommended from
-// https://stackoverflow.com/questions/6319551/whats-the-best-separator-delimiter-characters-for-a-plaintext-db-file
-const JSON_STREAM_SEPARATOR = Uint8Array.from([0x1d]);
-const CONTENT_STREAM_SEPARATOR = Uint8Array.from([0x1e]);
-
 const queryChatStream = async ({ query }: { query: string }) => {
   const store = getPineconeStore();
 
@@ -36,7 +31,7 @@ const queryChatStream = async ({ query }: { query: string }) => {
 
 function iterableToStream(
   iterable: AsyncIterable<OpenAIChatCompletionStreaming.Response>,
-  info: { context?: IVectorQueryResult[] },
+  documents?: IVectorQueryResult[],
 ) {
   const encoder = new TextEncoder();
   return new ReadableStream({
@@ -44,17 +39,15 @@ function iterableToStream(
       for await (const value of iterable) {
         const chunk = value.choices[0].delta.content;
         if (typeof chunk === 'string') {
-          controller.enqueue(encoder.encode(chunk));
+          const json = JSON.stringify({ type: 'chunk', value: chunk });
+          controller.enqueue(encoder.encode(json + '\n'));
         }
       }
 
-      controller.enqueue(CONTENT_STREAM_SEPARATOR);
-
-      const documents = info.context;
       if (documents) {
         for (const document of documents) {
-          controller.enqueue(encoder.encode(JSON.stringify(document)));
-          controller.enqueue(JSON_STREAM_SEPARATOR);
+          const json = JSON.stringify({ type: 'document', value: document });
+          controller.enqueue(encoder.encode(json + '\n'));
         }
       }
 
@@ -66,6 +59,6 @@ function iterableToStream(
 export async function POST(request: NextRequest) {
   const { query } = await request.json();
   const { result: iterable, info } = await queryChatStream({ query });
-  const stream = iterableToStream(iterable, info);
+  const stream = iterableToStream(iterable, info.context);
   return new Response(stream);
 }
