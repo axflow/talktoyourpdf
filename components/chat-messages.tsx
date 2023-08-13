@@ -5,7 +5,7 @@ import type { MessageType } from '@/lib/message';
 function ChatMessage(props: { message: MessageType }) {
   const message = props.message;
 
-  const shared = 'whitespace-pre-wrap w-fit max-w-[90%] rounded-lg px-3 py-2 text-md space-y-4';
+  const shared = 'whitespace-pre-wrap w-fit max-w-[85%] rounded-lg px-3 py-2 text-md space-y-4';
   const distinct = message.user ? 'ml-auto bg-primary text-primary-foreground' : 'bg-muted';
 
   return <div className={cn(shared, distinct)}>{message.text}</div>;

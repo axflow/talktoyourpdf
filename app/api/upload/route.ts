@@ -10,6 +10,8 @@ function zip<T1, T2>(l1: Array<T1>, l2: Array<T2>): Array<[T1, T2]> {
   return l1.map((item, i) => [item, l2[i]]);
 }
 const store = getPineconeStore();
+const splitter = new TextSplitter({ chunkSize: 2000, chunkOverlap: 0 });
+const embedder = new OpenAIEmbedder();
 
 /**
  * POST /docs/api/upload
@@ -29,18 +31,15 @@ export async function POST(request: NextRequest) {
   const doc = await converters.pdf(fileContentBuffer, { url: `file://${filename}` });
 
   try {
-    const splitter = new TextSplitter({ chunkSize: 2000, chunkOverlap: 0 });
-    // const embedder = new OpenAIEmbedder();
-
     const chunks = await splitter.split(doc);
-    // const embeddings = await embedder.embed(chunks.map((chunk) => chunk.text));
+    const embeddings = await embedder.embed(chunks.map((chunk) => chunk.text));
 
-    // const chunksWithEmbeddings = zip(chunks, embeddings).map(([chunk, embeddings]) => ({
-    //   ...chunk,
-    //   embeddings,
-    // }));
+    const chunksWithEmbeddings = zip(chunks, embeddings).map(([chunk, embeddings]) => ({
+      ...chunk,
+      embeddings,
+    }));
 
-    // await store.add(chunksWithEmbeddings);
+    await store.add(chunksWithEmbeddings);
 
     return NextResponse.json({ chunkCount: chunks.length }, { status: 200 });
   } catch {
