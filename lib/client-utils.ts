@@ -6,11 +6,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export async function uploadFile(url: string, file: File) {
+export async function uploadFile(url: string, pdf: PDFType) {
   const formData = new FormData();
 
-  formData.append('file', file);
-  formData.append('filename', file.name);
+  formData.append('id', pdf.id);
+  formData.append('file', pdf.file);
+  formData.append('filename', pdf.file.name);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -53,7 +54,11 @@ export async function createPdfObjectFromRemoteURL(url: string, filename: string
 
 const NEWLINE_BYTE = 10;
 
-export async function* queryStream(params: { query: string; useRag: boolean }) {
+export async function* queryStream(params: {
+  query: string;
+  use_rag: boolean;
+  document_id: string;
+}) {
   const response = await fetch('/api/query', {
     method: 'POST',
     body: JSON.stringify(params),

@@ -50,7 +50,7 @@ function PDFUploadView(props: {
     setUploading(true);
 
     try {
-      const response = await uploadFile('/api/upload', pdf.file);
+      const response = await uploadFile('/api/upload', pdf);
       onSuccess(response);
     } catch (error) {
       console.error(error);
@@ -344,7 +344,13 @@ export default function LandingPage() {
       user: false,
     };
 
-    for await (const object of queryStream({ query: questionText, useRag: useRag })) {
+    const stream = queryStream({
+      query: questionText,
+      use_rag: useRag,
+      document_id: pdf!.id,
+    });
+
+    for await (const object of stream) {
       if (object.type === 'chunk') {
         llmResponse = { ...llmResponse, text: llmResponse.text + object.value };
         setResponse(llmResponse);

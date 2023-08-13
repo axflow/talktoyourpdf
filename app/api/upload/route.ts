@@ -19,6 +19,7 @@ const embedder = new OpenAIEmbedder();
  */
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
+  const documentId = formData.get('id');
   const file = formData.get('file');
   const filename = formData.get('filename');
 
@@ -37,11 +38,12 @@ export async function POST(request: NextRequest) {
     const chunksWithEmbeddings = zip(chunks, embeddings).map(([chunk, embeddings]) => ({
       ...chunk,
       embeddings,
+      metadata: { ...chunk.metadata, term: documentId },
     }));
 
-    await store.add(chunksWithEmbeddings);
+    const ids = await store.add(chunksWithEmbeddings);
 
-    return NextResponse.json({ chunkCount: chunks.length }, { status: 200 });
+    return NextResponse.json({ ids, chunkCount: chunks.length }, { status: 200 });
   } catch {
     return NextResponse.json({ error: 'Error ingesting file' }, { status: 400 });
   }

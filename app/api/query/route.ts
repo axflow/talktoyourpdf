@@ -10,7 +10,6 @@ import {
   OpenAIChatCompletionStreaming,
   IVectorQueryResult,
 } from 'axgen';
-import { BasicPrompt } from 'axgen';
 
 const model = new OpenAIChatCompletion({
   model: 'gpt-4',
@@ -22,13 +21,13 @@ function chatStream(query: string) {
   return model.stream([{ role: 'user', content: query }]);
 }
 
-function ragChatStream(query: string) {
+function ragChatStream(query: string, documentId: string) {
   const store = getPineconeStore();
 
   const rag = new RAGChat({
     model: model,
     prompt: new PromptMessageWithContext({ template: QUESTION_WITH_CONTEXT }),
-    retriever: new Retriever({ store, topK: 4 }),
+    retriever: new Retriever({ store, topK: 4, filterTerm: documentId }),
     embedder: new OpenAIEmbedder(),
   });
 
@@ -65,10 +64,10 @@ function iterableToStream(
 }
 
 export async function POST(request: NextRequest) {
-  const { useRag, query } = await request.json();
+  const { query, document_id: documentId, use_rag: useRag } = await request.json();
 
   if (useRag) {
-    const { result: iterable, info } = ragChatStream(query);
+    const { result: iterable, info } = ragChatStream(query, documentId);
     const stream = iterableToStream(iterable, info);
     return new Response(stream);
   } else {
