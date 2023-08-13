@@ -10,33 +10,34 @@ import {
   OpenAIChatCompletionStreaming,
   IVectorQueryResult,
 } from 'axgen';
+import { BasicPrompt } from 'axgen';
 
-// Separators recommended from
-// https://stackoverflow.com/questions/6319551/whats-the-best-separator-delimiter-characters-for-a-plaintext-db-file
-const JSON_STREAM_SEPARATOR = Uint8Array.from([0x1d]);
-const CONTENT_STREAM_SEPARATOR = Uint8Array.from([0x1e]);
+const model = new OpenAIChatCompletion({
+  model: 'gpt-4',
+  max_tokens: 1000,
+  temperature: 0,
+});
 
-const queryChatStream = async ({ query }: { query: string }) => {
+function chatStream(query: string) {
+  return model.stream([{ role: 'user', content: query }]);
+}
+
+function ragChatStream(query: string) {
   const store = getPineconeStore();
 
   const rag = new RAGChat({
-    model: new OpenAIChatCompletion({
-      model: 'gpt-4',
-      max_tokens: 1000,
-      // Let's not get creative today
-      temperature: 0,
-    }),
+    model: model,
     prompt: new PromptMessageWithContext({ template: QUESTION_WITH_CONTEXT }),
     retriever: new Retriever({ store, topK: 4 }),
     embedder: new OpenAIEmbedder(),
   });
 
   return rag.stream(query);
-};
+}
 
 function iterableToStream(
   iterable: AsyncIterable<OpenAIChatCompletionStreaming.Response>,
-  info: { context?: IVectorQueryResult[] },
+  info?: { context?: IVectorQueryResult[] },
 ) {
   const encoder = new TextEncoder();
   return new ReadableStream({
@@ -44,17 +45,17 @@ function iterableToStream(
       for await (const value of iterable) {
         const chunk = value.choices[0].delta.content;
         if (typeof chunk === 'string') {
-          controller.enqueue(encoder.encode(chunk));
+          const json = JSON.stringify({ type: 'chunk', value: chunk });
+          controller.enqueue(encoder.encode(json + '\n'));
         }
       }
 
-      controller.enqueue(CONTENT_STREAM_SEPARATOR);
+      const documents = info?.context;
 
-      const documents = info.context;
       if (documents) {
         for (const document of documents) {
-          controller.enqueue(encoder.encode(JSON.stringify(document)));
-          controller.enqueue(JSON_STREAM_SEPARATOR);
+          const json = JSON.stringify({ type: 'document', value: document });
+          controller.enqueue(encoder.encode(json + '\n'));
         }
       }
 
@@ -64,8 +65,15 @@ function iterableToStream(
 }
 
 export async function POST(request: NextRequest) {
-  const { query } = await request.json();
-  const { result: iterable, info } = await queryChatStream({ query });
-  const stream = iterableToStream(iterable, info);
-  return new Response(stream);
+  const { useRag, query } = await request.json();
+
+  if (useRag) {
+    const { result: iterable, info } = ragChatStream(query);
+    const stream = iterableToStream(iterable, info);
+    return new Response(stream);
+  } else {
+    const iterable = chatStream(query);
+    const stream = iterableToStream(iterable);
+    return new Response(stream);
+  }
 }

@@ -1,67 +1,79 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+'use client';
+
 import { useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
-export const CONTENT_TYPE_TO_EXT_MAP = {
-  'text/csv': 'csv',
-  'application/pdf': 'pdf',
-  'text/plain': 'text',
-} as const;
+import { UploadIcon } from '@radix-ui/react-icons';
+import { cn, createPdfObject } from '@/lib/client-utils';
+import { PDFType } from '@/lib/pdf';
 
-export type ContentType = keyof typeof CONTENT_TYPE_TO_EXT_MAP;
+const TWO_MEGABYTES = 2 * 1024 * 1024;
 
 type PropsType = {
-  label: string;
-  accept?: ContentType[];
-  disabled?: boolean;
-  onSubmit: (files: File[]) => void;
+  onSubmit: (pdf: PDFType) => void;
 };
 
-export function FileForm(props: PropsType) {
-  const { label, accept, disabled, onSubmit } = props;
+export function PDFUploadForm(props: PropsType) {
+  const { onSubmit } = props;
 
-  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
+  return (
+    <div className="w-full">
+      <UploadForm setError={setError} onSubmit={onSubmit} />
+      {error && <p className="pt-4 text-red-600 text-sm text-center">{error}</p>}
+    </div>
+  );
+}
 
-    if (!files || files.length < 1) {
-      return;
-    }
+type UploadPropsType = PropsType & {
+  setError: (message: string | null) => void;
+};
 
-    const file = files[0];
-    const type = file.type as ContentType;
+function UploadForm({ setError, onSubmit }: UploadPropsType) {
+  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+    onDrop: (files, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        setError('Only one PDF file is allowed. Please select a PDF file.');
+        return;
+      }
 
-    if (Array.isArray(accept) && !accept.includes(type)) {
-      const fileTypes = accept.map((t) => CONTENT_TYPE_TO_EXT_MAP[t]);
-      setError(`Supported file types: ${fileTypes.join(', ')}`);
-    } else {
-      setError(null);
-      setFiles([file]);
-    }
-  }
+      const file = files[0];
+
+      if (file) {
+        if (file.size >= TWO_MEGABYTES) {
+          setError('Maximum supported file size is 2 megabytes. Please choose a smaller PDF file.');
+        } else {
+          setError(null);
+          onSubmit(createPdfObject(file));
+        }
+      }
+    },
+    maxFiles: 1,
+    accept: { 'application/pdf': ['.pdf'] },
+  });
 
   return (
-    <div className="grid w-full max-w-sm items-center gap-1.5">
-      <Label htmlFor="file-input">{label}</Label>
-      <div className="flex w-full max-w-sm items-center space-x-2">
-        <Input
-          id="file-input"
-          type="file"
-          onChange={onChange}
-          className={`cursor-pointer${error ? ' border-red-700' : ''}`}
-        />
-        <Button
-          type="submit"
-          disabled={disabled || files.length === 0}
-          onClick={() => onSubmit(files)}
-        >
-          Continue
-        </Button>
+    <label
+      {...getRootProps({
+        onClick: open,
+        htmlFor: 'dropzone-file',
+        className: cn(
+          'flex flex-col items-center justify-center w-full h-96 border-2 border-zinc-600 hover:border-zinc-400 border-dashed rounded-lg cursor-pointer text-zinc-500 dark:text-zinc-400 dark:hover:text-zinc-300 transition ease-in',
+          isDragActive && 'dark:text-zinc-300 border-zinc-400',
+        ),
+      })}
+    >
+      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <p className="mb-2">
+          <UploadIcon width={32} height={32} />
+        </p>
+        <p className="mb-2 text-sm">
+          <span className="font-semibold">Click to upload</span> or drag and drop
+        </p>
+        <p className="text-xs">PDF (maximum size of 2MB)</p>
       </div>
-      {error && <span className="text-red-700 text-sm">{error}</span>}
-    </div>
+      <input {...getInputProps({ id: 'dropzone-file', className: 'hidden' })} />
+    </label>
   );
 }
