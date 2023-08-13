@@ -253,6 +253,8 @@ function Playground(props: {
   onSubmit: () => void;
   questionText: string;
   setQuestionText: (text: string) => void;
+  useRag: boolean;
+  setUseRag: (useRag: boolean) => void;
 }) {
   function onChange(e: React.FormEvent<HTMLTextAreaElement>) {
     props.setQuestionText(e.currentTarget.value);
@@ -271,12 +273,13 @@ function Playground(props: {
           id="user-prompt"
           autoFocus
           placeholder="Ask a question..."
+          className="resize-none"
         />
         <div className="mt-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Switch id="include-context" defaultChecked />
-              <Label htmlFor="include-context">Use RAG</Label>
+              <Switch id="use-rag" checked={props.useRag} onCheckedChange={props.setUseRag} />
+              <Label htmlFor="use-rag">Use RAG</Label>
             </div>
           </div>
           <Button variant="outline" disabled={props.disabled} onClick={props.onSubmit}>
@@ -296,6 +299,8 @@ export default function LandingPage() {
   const [playgroundDisabled, setPlaygroundDisabled] = useState(false);
 
   const [questionText, setQuestionText] = useState('');
+  const [useRag, setUseRag] = useState(true);
+
   const [response, setResponse] = useState<MessageType | null>(null);
 
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -339,7 +344,7 @@ export default function LandingPage() {
       user: false,
     };
 
-    for await (const object of queryStream(questionText)) {
+    for await (const object of queryStream({ query: questionText, useRag: useRag })) {
       if (object.type === 'chunk') {
         llmResponse = { ...llmResponse, text: llmResponse.text + object.value };
         setResponse(llmResponse);
@@ -404,6 +409,8 @@ export default function LandingPage() {
               messages={messages}
               questionText={questionText}
               setQuestionText={setQuestionText}
+              useRag={useRag}
+              setUseRag={setUseRag}
             />
           </div>
         );

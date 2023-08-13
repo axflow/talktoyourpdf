@@ -53,10 +53,10 @@ export async function createPdfObjectFromRemoteURL(url: string, filename: string
 
 const NEWLINE_BYTE = 10;
 
-export async function* queryStream(queryText: string) {
+export async function* queryStream(params: { query: string; useRag: boolean }) {
   const response = await fetch('/api/query', {
     method: 'POST',
-    body: JSON.stringify({ query: queryText }),
+    body: JSON.stringify(params),
   });
 
   if (!response.ok || !response.body) {

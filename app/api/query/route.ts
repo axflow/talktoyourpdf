@@ -10,27 +10,34 @@ import {
   OpenAIChatCompletionStreaming,
   IVectorQueryResult,
 } from 'axgen';
+import { BasicPrompt } from 'axgen';
 
-const queryChatStream = async ({ query }: { query: string }) => {
+const model = new OpenAIChatCompletion({
+  model: 'gpt-4',
+  max_tokens: 1000,
+  temperature: 0,
+});
+
+function chatStream(query: string) {
+  return model.stream([{ role: 'user', content: query }]);
+}
+
+function ragChatStream(query: string) {
   const store = getPineconeStore();
 
   const rag = new RAGChat({
-    model: new OpenAIChatCompletion({
-      model: 'gpt-4',
-      max_tokens: 1000,
-      temperature: 0,
-    }),
+    model: model,
     prompt: new PromptMessageWithContext({ template: QUESTION_WITH_CONTEXT }),
     retriever: new Retriever({ store, topK: 4 }),
     embedder: new OpenAIEmbedder(),
   });
 
   return rag.stream(query);
-};
+}
 
 function iterableToStream(
   iterable: AsyncIterable<OpenAIChatCompletionStreaming.Response>,
-  info: { context?: IVectorQueryResult[] },
+  info?: { context?: IVectorQueryResult[] },
 ) {
   const encoder = new TextEncoder();
   return new ReadableStream({
@@ -43,7 +50,7 @@ function iterableToStream(
         }
       }
 
-      const documents = info.context;
+      const documents = info?.context;
 
       if (documents) {
         for (const document of documents) {
@@ -58,8 +65,15 @@ function iterableToStream(
 }
 
 export async function POST(request: NextRequest) {
-  const { query } = await request.json();
-  const { result: iterable, info } = await queryChatStream({ query });
-  const stream = iterableToStream(iterable, info);
-  return new Response(stream);
+  const { useRag, query } = await request.json();
+
+  if (useRag) {
+    const { result: iterable, info } = ragChatStream(query);
+    const stream = iterableToStream(iterable, info);
+    return new Response(stream);
+  } else {
+    const iterable = chatStream(query);
+    const stream = iterableToStream(iterable);
+    return new Response(stream);
+  }
 }
