@@ -18,7 +18,6 @@ const queryChatStream = async ({ query }: { query: string }) => {
     model: new OpenAIChatCompletion({
       model: 'gpt-4',
       max_tokens: 1000,
-      // Let's not get creative today
       temperature: 0,
     }),
     prompt: new PromptMessageWithContext({ template: QUESTION_WITH_CONTEXT }),
@@ -31,7 +30,7 @@ const queryChatStream = async ({ query }: { query: string }) => {
 
 function iterableToStream(
   iterable: AsyncIterable<OpenAIChatCompletionStreaming.Response>,
-  documents?: IVectorQueryResult[],
+  info: { context?: IVectorQueryResult[] },
 ) {
   const encoder = new TextEncoder();
   return new ReadableStream({
@@ -43,6 +42,8 @@ function iterableToStream(
           controller.enqueue(encoder.encode(json + '\n'));
         }
       }
+
+      const documents = info.context;
 
       if (documents) {
         for (const document of documents) {
@@ -59,6 +60,6 @@ function iterableToStream(
 export async function POST(request: NextRequest) {
   const { query } = await request.json();
   const { result: iterable, info } = await queryChatStream({ query });
-  const stream = iterableToStream(iterable, info.context);
+  const stream = iterableToStream(iterable, info);
   return new Response(stream);
 }

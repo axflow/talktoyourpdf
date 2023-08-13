@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { converters, Pinecone, TextSplitter, OpenAIEmbedder } from 'axgen';
-import { getEnvOrThrow } from '@/lib/node-utils';
+import { converters, TextSplitter, OpenAIEmbedder } from 'axgen';
+import { getPineconeStore } from '@/lib/node-utils';
 
 function zip<T1, T2>(l1: Array<T1>, l2: Array<T2>): Array<[T1, T2]> {
   if (l1.length !== l2.length) {
@@ -9,12 +9,7 @@ function zip<T1, T2>(l1: Array<T1>, l2: Array<T2>): Array<[T1, T2]> {
 
   return l1.map((item, i) => [item, l2[i]]);
 }
-const store = new Pinecone({
-  index: getEnvOrThrow('PINECONE_INDEX'),
-  namespace: getEnvOrThrow('PINECONE_NAMESPACE'),
-  apiKey: getEnvOrThrow('PINECONE_API_KEY'),
-  environment: getEnvOrThrow('PINECONE_ENVIRONMENT'),
-});
+const store = getPineconeStore();
 
 /**
  * POST /docs/api/upload
