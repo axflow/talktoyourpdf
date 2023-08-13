@@ -152,7 +152,7 @@ function Welcome(props: { setPdf: (pdf: PDFType) => void }) {
       </p>
 
       <p className="mt-6">
-        To begin, upload a PDF file less than 5MB or{' '}
+        To begin, upload a PDF file less than 2MB or{' '}
         <SpanLink
           onClick={async () => {
             const file = await createPdfObjectFromRemoteURL(
