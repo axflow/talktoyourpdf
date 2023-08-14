@@ -424,11 +424,13 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="min-h-screen h-screen flex">
-      <section className="bg-muted bg-zinc-900 dark:border-r min-w-[600px] max-w-[600px] pt-[52px] pb-8">
+    <main className="min-h-screen h-screen max-h-screen flex">
+      <section className="bg-muted bg-zinc-900 dark:border-r min-w-[600px] max-w-[600px] pt-[52px] pb-8 h-full overflow-y-scroll">
         {renderLeftPanel()}
       </section>
-      <section className="w-full h-full pt-[52px]">{renderRightPanel()}</section>
+      <section className="w-full pt-[52px] pb-8 h-full overflow-y-scroll">
+        {renderRightPanel()}
+      </section>
     </main>
   );
 }
