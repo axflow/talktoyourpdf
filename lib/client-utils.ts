@@ -31,6 +31,7 @@ export async function downloadPDFDocument(url: string, name = 'file.pdf') {
   return new File([blob], name, { type: 'application/pdf' });
 }
 
+// Intended only for client-side use.
 export const generateSequentialId = ((counter: number) => {
   return () => Date.now() + ++counter;
 })(0);
