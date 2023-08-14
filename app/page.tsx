@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { UploadIcon } from '@radix-ui/react-icons';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import {
   AlertDialog,
@@ -125,6 +126,8 @@ function PDFUploadView(props: {
 function Welcome(props: { setPdf: (pdf: PDFType) => void }) {
   return (
     <>
+      <div className="mb-2">1 of 3</div>
+
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">Welcome</h1>
 
       <p className="mt-6">
@@ -173,6 +176,8 @@ function Welcome(props: { setPdf: (pdf: PDFType) => void }) {
 function Chunking() {
   return (
     <>
+      <div className="mb-2">2 of 3</div>
+
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">Chunking</h1>
 
       <p className="mt-6">
@@ -216,6 +221,8 @@ function Chunking() {
 function Querying(props: { pdf: PDFType }) {
   return (
     <>
+      <div className="mb-2">3 of 3</div>
+
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">Querying</h1>
 
       <p className="mt-6">
@@ -291,23 +298,47 @@ function Playground(props: {
   );
 }
 
-type StepType = 'landing' | 'chunking' | 'querying';
+const PAGES = ['landing', 'chunking', 'querying'] as const;
+
+type PageType = (typeof PAGES)[number];
+
+function urlForPage(page: PageType) {
+  const url = new URL(window.location.href);
+
+  if (page === 'landing') {
+    url.searchParams.delete('page');
+  } else {
+    url.searchParams.set('page', page);
+  }
+
+  return url.toString();
+}
 
 export default function LandingPage() {
-  const [step, setStep] = useState<StepType>('landing');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const page = (searchParams.get('page') as PageType) || 'landing';
+
   const [pdf, setPdf] = useState<PDFType | null>(null);
   const [playgroundDisabled, setPlaygroundDisabled] = useState(false);
-
   const [questionText, setQuestionText] = useState('');
   const [useRag, setUseRag] = useState(true);
-
   const [response, setResponse] = useState<MessageType | null>(null);
-
   const [messages, setMessages] = useState<MessageType[]>([]);
+
+  useEffect(() => {
+    if (page !== 'landing' && pdf === null) {
+      router.replace('/');
+    }
+  }, [page, pdf]);
+
+  function navigateTo(page: PageType) {
+    router.push(urlForPage(page));
+  }
 
   function setPdfAndNavigate(file: PDFType) {
     setPdf(file);
-    setStep('chunking');
+    navigateTo('chunking');
   }
 
   function onTryAgain(file: PDFType | null) {
@@ -315,11 +346,11 @@ export default function LandingPage() {
       URL.revokeObjectURL(pdf.url);
     }
     setPdf(file);
-    setStep(file ? 'chunking' : 'landing');
+    navigateTo(file ? 'chunking' : 'landing');
   }
 
   function onUploadSuccess(response: any) {
-    setStep('querying');
+    navigateTo('querying');
   }
 
   async function onQuestionSubmit() {
@@ -363,7 +394,7 @@ export default function LandingPage() {
   }
 
   function renderLeftPanel() {
-    switch (step) {
+    switch (page) {
       case 'landing':
         return (
           <div className="pl-6 pr-9 pt-24">
@@ -371,12 +402,20 @@ export default function LandingPage() {
           </div>
         );
       case 'chunking':
+        if (!pdf) {
+          return null;
+        }
+
         return (
           <div className="pl-6 pr-9 pt-24">
             <Chunking />
           </div>
         );
       case 'querying':
+        if (!pdf) {
+          return null;
+        }
+
         return (
           <div className="pl-6 pr-9 pt-24">
             <Querying pdf={pdf!} />
@@ -386,7 +425,7 @@ export default function LandingPage() {
   }
 
   function renderRightPanel() {
-    switch (step) {
+    switch (page) {
       case 'landing':
         return (
           <div className="px-6 pt-24">
@@ -396,6 +435,10 @@ export default function LandingPage() {
           </div>
         );
       case 'chunking':
+        if (!pdf) {
+          return null;
+        }
+
         return (
           <div className="px-6 pt-24">
             <div className="flex items-center justify-center w-full">
@@ -406,6 +449,10 @@ export default function LandingPage() {
           </div>
         );
       case 'querying':
+        if (!pdf) {
+          return null;
+        }
+
         return (
           <div className="pt-24 h-full">
             <Playground
