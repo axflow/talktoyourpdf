@@ -1,3 +1,3 @@
 # Axshow
 
-Demos built with the [Ax](https://github.com/axilla-io/ax) framework.
+Demos built with the [Axflow](https://github.com/axflow/axflow) framework.

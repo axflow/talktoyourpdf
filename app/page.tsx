@@ -132,7 +132,7 @@ function Welcome(props: { setPdf: (pdf: PDFType) => void }) {
 
       <p className="mt-6">
         This is a guided tutorial of Retrieval Augmented Generation (RAG) using the{' '}
-        <Link href="https://github.com/axilla-io/ax">ax framework</Link>.
+        <Link href="https://github.com/axflow/axflow">Axflow framework</Link>.
       </p>
 
       <blockquote className="mt-6 border-l-2 pl-6 text-sm text-muted-foreground">
