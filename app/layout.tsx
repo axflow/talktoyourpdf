@@ -1,4 +1,5 @@
 import './globals.css';
+import PlausibleProvider from 'next-plausible';
 import { ThemeProvider } from '@/components/theme-provider';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -23,7 +24,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <PlausibleProvider domain="demo.axflow.dev" />
+      </head>
       <body className={'min-h-screen antialiased ' + inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Header />

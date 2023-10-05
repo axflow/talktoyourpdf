@@ -330,7 +330,7 @@ export default function LandingPage() {
     if (page !== 'landing' && pdf === null) {
       router.replace('/');
     }
-  }, [page, pdf]);
+  }, [router, page, pdf]);
 
   function navigateTo(page: PageType) {
     router.push(urlForPage(page));
